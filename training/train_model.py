@@ -41,9 +41,23 @@ class train_data():
         self.height = 256
 
     def run_script(self):
+        """self.sample_scan = np.load('mri_scan_sample.npy')
+        self.sample_scan_slices = []
+
+        for slice_count in range(0,len(self.sample_scan)):
+          try:
+            self.sample_scan_slices.append(np.pad(self.sample_scan[slice_count,:, :][::-1, :], ((0, 0), (0, 80)), mode='constant', constant_values=0).reshape(self.width, self.height, 1))
+            self.sample_scan_slices.append(np.pad(self.sample_scan[:,slice_count, :], ((0, 16), (0, 80)), mode='constant', constant_values=0).reshape(self.width, self.height, 1))
+            self.sample_scan_slices.append(np.pad(self.sample_scan[:, :,slice_count][:, ::-1], ((0, 16), (0, 0)), mode='constant', constant_values=0).reshape(self.width, self.height, 1))
+          except Exception as e:
+            print(e)
+
+        self.sample_scan_slices = self.normalize_images(self.sample_scan_slices)
+        self.prediction_tests()"""
+
         #self.masked_images = np.load('/content/drive/MyDrive/masked_array_normalized.npy')
         #self.mri_images = np.load('/content/drive/MyDrive/mri_array_normalized_noise.npy')
-        #self.generator = self.build_custom_dilated_variable_filter_generator('mish')
+        self.generator = self.build_custom_dilated_variable_filter_generator('elu')
 
         custom_objects = {
             'combined_dice_bce_loss':self.combined_dice_bce_loss,
@@ -51,8 +65,8 @@ class train_data():
             'boundary_loss':self.boundary_loss,
             'combined_loss':self.combined_loss
         }
-        self.generator = load_model('/content/drive/MyDrive/final_model_abstract_new_augmentation.h5',custom_objects=custom_objects)
-        #self.generator.compile(loss=self.combined_loss, optimizer=tf.keras.optimizers.Adam(learning_rate=0.002,beta_1=0.5),metrics=[self.dice_loss])
+        #self.generator = load_model('/content/drive/MyDrive/final_model_abstract_new_augmentation.h5',custom_objects=custom_objects)
+        self.generator.compile(loss=self.boundary_loss, optimizer=tf.keras.optimizers.Adam(learning_rate=0.002,beta_1=0.5),metrics=[self.dice_loss])
         print(self.generator.summary())
         #self.generator = self.load_old_model()
         #self.generator.load_weights('/content/drive/MyDrive/final_model_abstract_swish_activation.h5')
@@ -110,7 +124,7 @@ class train_data():
 
 
 
-    def combined_loss(self,y_true, y_pred, alpha=0.5, beta=0.5, gamma=0.5):
+    def combined_loss(self,y_true, y_pred, alpha=0.1, beta=0.1, gamma=1):
       bce = tf.keras.losses.BinaryCrossentropy()(y_true, y_pred)
       d_loss = self.dice_loss(y_true, y_pred)
       boundary = self.boundary_loss(y_true, y_pred)
@@ -167,13 +181,13 @@ class train_data():
         combined_loss = (alpha * dice_loss) + ((1 - alpha) * bce_loss)
         return combined_loss
 
- 
+
     def build_custom_dilated_variable_filter_generator(self,activ_func):
           def dilation_block(input):
             output = layers.Conv2D(64, (3, 3), dilation_rate=1, padding='same')(input)
             output = layers.BatchNormalization()(output)
             output = layers.Activation(activ_func)(output)
-            for dilation_rate in range(1, 48, 3):
+            for dilation_rate in range(1, 16, 1):
                 print(dilation_rate)
                 filter_size = 64
                 output = layers.Conv2D(filter_size, (3, 3), dilation_rate=dilation_rate, padding='same')(output)
@@ -277,7 +291,7 @@ class train_data():
 
 
     def train(self, epochs, batch_size=8, save_interval=20, num_examples=10):
-        checkpoint_cb = tf.keras.callbacks.ModelCheckpoint('/content/drive/MyDrive/final_model_abstract_new_augmentation.h5', save_best_only=True)
+        checkpoint_cb = tf.keras.callbacks.ModelCheckpoint('/content/drive/MyDrive/boundary_loss_test_2_27_20224.h5', save_best_only=True)
         batch_size = 8
         #self.generator.fit(self.mri_images,self.masked_images,epochs=100,batch_size=batch_size,callbacks=[checkpoint_cb],validation_split = 0.2,shuffle=True)
         train_data_dir = '/content/drive/MyDrive/augmented_training_sets'
