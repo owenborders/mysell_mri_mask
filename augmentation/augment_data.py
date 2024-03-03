@@ -54,7 +54,6 @@ class Augmentimage():
 
         return padded_slice
 
-    folder = 'D:/Mysell/NFBS_Dataset'
     mri_images = []
     masked_images = []
     x = 0
@@ -70,8 +69,6 @@ class Augmentimage():
         for row in range(0,len(self.slice_image)):
             max_pixel = random.uniform(0.5, 1)
             min_pixel = random.uniform(0.5, max_pixel)
-
-
             for pixel in range(0,len(self.slice_image[row])):
                 if self.slice_image[row][pixel] < 0:
                    print(self.slice_image[row][pixel])
@@ -87,8 +84,6 @@ class Augmentimage():
 
     def add_random_noise(self):
         for row in range(0,len(self.slice_image)):
-
-
             for pixel in range(0,len(self.slice_image[row])):
                 max_pixel = random.uniform(0.5, 1)
                 min_pixel = random.uniform(0.5, max_pixel)
@@ -146,7 +141,8 @@ class Augmentimage():
                                                   :min(256, resized_image.shape[1])]
 
             # Place the resized (and potentially clipped) image onto the black background
-            background[start_y:start_y+resized_image_clipped.shape[0], start_x:start_x+resized_image_clipped.shape[1]] = resized_image_clipped
+            background[start_y:start_y+resized_image_clipped.shape[0], \
+                       start_x:start_x+resized_image_clipped.shape[1]] = resized_image_clipped
 
             return background
 
@@ -185,7 +181,8 @@ class Augmentimage():
         elif shape_choice == 'random':
           # Draw a random shape
             num_points = random.randint(3, 10)  # Random number of points
-            points = np.array([([random.randint(random.randint(0, width), width), random.randint(random.randint(0, height), height)]) for _ in range(num_points)])
+            points = np.array([([random.randint(random.randint(0, width), width),\
+                                random.randint(random.randint(0, height), height)]) for _ in range(num_points)])
             cv2.polylines(self.slice_image, [points], isClosed=True, color=color, thickness=random.randint(1, 3))
 
 
@@ -225,7 +222,8 @@ class Augmentimage():
         elif shape_choice == 'random':
             # Draw a random shape
             num_points = random.randint(3, 10)
-            points = np.array([([random.randint(random.randint(0, width), width), random.randint(random.randint(0, height), height)]) for _ in range(num_points)])
+            points = np.array([([random.randint(random.randint(0, width), width),\
+                                 random.randint(random.randint(0, height), height)]) for _ in range(num_points)])
             cv2.fillPoly(overlay, [points], intensity)
 
         # Blend the overlay with the original image
@@ -355,6 +353,8 @@ class Augmentimage():
         # Ensure the final image stays within the 0-1 range
         np.clip(self.slice_image, 0, 1, out=self.slice_image)
 
+
+
     def invert_skull(self):
         mask = (self.mask_image == 0) & (self.slice_image > 0.01)
         self.slice_image[mask] = 1 - self.slice_image[mask]
@@ -409,7 +409,11 @@ class Augmentimage():
         else:
           self.slice_image[condition_mask] = random.uniform(0,1)
 
+
+        # Clip values to be within [0, 1]
         np.clip(self.slice_image, 0, 1, out=self.slice_image)
+
+
 
     def change_brain_blackspace(self):
 
@@ -461,6 +465,63 @@ class Augmentimage():
             return False
         self.artifact_limit +=1
 
+    def apply_motion(self,chance = 3):
+      if self.random_execution(chance):
+        self.add_motion()
+    def apply_inversion(self,chance = 1):
+      if self.random_execution(chance):
+        self.inversion = True
+        self.invert_brain()
+        self.invert_skull()
+    def apply_noise(self,chance = {'regular':1,'straight':1,'overlay':2}):
+        if self.random_execution(chance['regular']):
+            self.add_random_noise()
+        if self.random_execution(chance['straight']):
+            self.add_straight_noise()
+        if self.random_execution(chance['overlay']):
+            self.overlay_random_noise()
+
+    def apply_intensity(self,chance = {'brain':1,'skull':2}):
+        if self.random_execution(chance['brain']):
+            if not self.inversion:
+                self.change_brain_intensity()
+        if self.random_execution(chance['skull']):
+            if not self.inversion:
+                self.change_skull_intensity()
+
+    def apply_signal_drop(self,chance = 1):
+        if self.random_execution(chance):
+            self.add_signal_drop()
+
+    def apply_rotation(self,chance = 2):
+        if self.random_execution(chance):
+            self.rotate_image()
+    
+    def apply_resizing(self,chance = 2):
+        if self.random_execution(chance):
+            self.resize_image()
+
+    def apply_blackspace_randomization(self,
+    chance = {'brain':1,'skull':2}):
+        if self.random_execution(chance['brain']):
+            self.change_brain_blackspace()
+        if self.random_execution(chance['skull']):
+            self.change_skull_blackspace()
+
+    def apply_ghosting(self,chance = 3):
+        if self.random_execution(chance):
+            self.simulate_ghosting_artifact()
+
+    def apply_shapes(self,chance = {'high_opacity':5,'low_opacity':4}):
+        if self.random_execution(chance['high_opacity']):
+                for x in range(0,random.randint(1,7)):
+                    self.draw_random_shape()
+        if self.random_execution(chance['low_opacity']):
+            for x in range(0,random.randint(1,7)):
+                self.draw_random_shape_with_opacity_grayscale()
+
+
+
     def modify_images(self):
         brain_inverted = False
         self.brain_size = self.calculate_brain_size()
@@ -485,58 +546,25 @@ class Augmentimage():
 
         apply_to_all()
 
+
         def add_extra_artifacts():
             self.change_skull_contrast()
-            inversion = False
-
-            if self.random_execution(3):
-                self.add_motion()
-            if self.random_execution(1):
-                inversion = True
-                self.invert_brain()
-                self.invert_skull()
-
-            if self.random_execution(1):
-                self.add_random_noise()
-            if self.random_execution(1):
-                self.add_straight_noise()
-
-            if self.random_execution(1):
-                if not inversion:
-                    self.change_brain_intensity()
-            if self.random_execution(2):
-                if not inversion:
-                    self.change_skull_intensity()
-
-            if self.random_execution(1):
-                self.add_signal_drop()
-            if self.random_execution(2):
-                self.rotate_image()
-            if self.random_execution(2):
-                self.resize_image()
-            if self.random_execution(4):
-              self.change_brain_blackspace()
-            if self.random_execution(4):
-              self.change_skull_blackspace()
-            if self.random_execution(3):
-                self.simulate_ghosting_artifact()
-
-            if self.random_execution(4):
-                for x in range(0,random.randint(1,7)):
-                    self.draw_random_shape()
-
-            if self.random_execution(5):
-                for x in range(0,random.randint(1,7)):
-                    self.draw_random_shape_with_opacity_grayscale()
-
-            if self.random_execution(1):
-                self.add_straight_noise()
-            if self.random_execution(1):
-                self.add_random_noise()
-            if self.random_execution(1):
-                self.add_signal_drop()
-            if self.random_execution(2):
-                self.overlay_random_noise()
+            self.inversion = False
+            self.apply_motion()
+            self.apply_inversion()
+            self.apply_noise({'regular':1,'straight':1,'overlay':0})
+            self.apply_intensity()
+            self.apply_signal_drop()
+            self.apply_rotation()
+            self.apply_resizing()
+            self.apply_blackspace_randomization()
+            self.apply_ghosting()
+            self.apply_shapes()
+            self.apply_noise()
+            self.apply_signal_drop()
+            self.apply_noise(\
+            {'regular':0,'straight':0,'overlay':2})
+    
 
 
         if self.extra_artifacts:
@@ -545,7 +573,7 @@ class Augmentimage():
         return self.slice_image, self.mask_image
 
 
-folder = '/content/drive/MyDrive/NFBS_Dataset'
+folder = 'NFBS_Dataset'
 
 x = 0
 
@@ -562,14 +590,7 @@ def nii_to_numpy(nii_file_path):
     nii_image = nib.load(nii_file_path)
     data = nii_image.get_fdata()
     return np.array(data)
-mri_sample = np.load(f'/content/drive/MyDrive/augmented_training_sets/suject_53/mri_array.npy')
-mask_sample = np.load(f'/content/drive/MyDrive/augmented_training_sets/suject_53/mask_array.npy')
-"""for slice_number in range(0,150):
-  plt.subplot(2, 1,1)
-  plt.imshow(mri_sample[slice_number], cmap='gray')
-  plt.subplot(2, 1,  2)
-  plt.imshow(mask_sample[slice_number], cmap='gray')
-  plt.show()"""
+
 for subject in os.listdir(folder):
 
     mri_images = []
@@ -580,10 +601,9 @@ for subject in os.listdir(folder):
     masked_array = []
     x+=1
     print(x)
-    if x > 50:
+    if x < 101:
       continue
-    if x > 101:
-      continue
+
 
     for file in os.listdir(folder + '/' + subject):
         print(file)
@@ -632,17 +652,20 @@ for subject in os.listdir(folder):
     print(masked_array.shape)
     print(mri_array.shape)
 
-    os.makedirs(f'/content/drive/MyDrive/augmented_training_sets/suject_{x}', exist_ok=True)
+    os.makedirs(f'training_set/subject_{x}', exist_ok=True)
 
-    np.save(f'/content/drive/MyDrive/augmented_training_sets/suject_{x}/mri_array.npy',mri_array)
-    np.save(f'/content/drive/MyDrive/augmented_training_sets/suject_{x}/mask_array.npy',masked_array)
+    np.save(f'training_set/subject_{x}/mri_array.npy',mri_array)
+    np.save(f'training_set/subject_{x}/mask_array.npy',masked_array)
 
-mri_array = np.array(mri_images)
-mri_images = []
-#print(mri_array.shape)
-#np.save('/content/drive/MyDrive/mri_array.npy',mri_array)
-mri_array = []
+try:
+    mri_array = np.array(mri_images)
+    mri_images = []
+    #print(mri_array.shape)
+    #np.save('/content/drive/MyDrive/mri_array.npy',mri_array)
+    mri_array = []
 
-masked_array = np.array(masked_images)
-masked_images = []
+    masked_array = np.array(masked_images)
+    masked_images = []
+except Exception as e:
+    print(e)
 
