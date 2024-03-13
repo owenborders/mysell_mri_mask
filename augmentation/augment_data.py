@@ -218,7 +218,29 @@ class Augmentimage():
             cv2.polylines(self.slice_image, [points], isClosed=True, \
             color=color, thickness=random.randint(1, 3))
 
-    def draw_basic_shapes(self, shape_choice, target , thickness):
+    def draw_basic_shapes(
+        self, shape_choice : str, target : np.array,
+        thickness : int
+    ) -> np.array:
+        """
+        Randomly draws a rectangle, circle, or line 
+
+        Parameters
+        --------------
+        shape_choice : str
+            Determines which shape is drawn
+        target : np.array
+            Where the shape is being added
+        thickness : int
+            thickness of lines 
+        
+        Returns
+        -----------
+        target : np.array
+            Input image with shape 
+            added on
+        """
+
         color = (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1))
         height, width = self.slice_image.shape[:2]
         if shape_choice == 'rectangle':
@@ -243,6 +265,7 @@ class Augmentimage():
         Draws random shapes with
         varying levels of transparency 
         """
+        
         height, width = self.slice_image.shape[:2]
         overlay = np.zeros_like(self.slice_image)
         alpha = random.uniform(0.2, 0.8)
@@ -362,8 +385,6 @@ class Augmentimage():
 
         np.clip(self.slice_image, 0, 1, out=self.slice_image)
 
-
-
     def invert_skull(self):
         """
         Inverts pixel values
@@ -382,7 +403,17 @@ class Augmentimage():
         self.slice_image[mask] = 0
 
 
-    def change_skull_intensity(self, intensity_change, add):
+    def change_skull_intensity(self, intensity_change : float, add : int):
+        """
+        Randomly varies intensity of skull
+
+        Parameters
+        ------------
+        intensity_change : float
+            magnitude of intensity change
+        add : int
+            determines if intensity_change is added or subtracted
+        """
 
         condition_mask = (self.mask_image == 0) & (self.slice_image > 0.1)
         if add == 0:
@@ -393,6 +424,9 @@ class Augmentimage():
 
 
     def change_skull_blackspace(self):
+        """
+        Randomly varies the black pixels in the skull
+        """
 
         replacement = random.randint(0,2)
         brain_region = (self.mask_image == 1)
@@ -414,6 +448,10 @@ class Augmentimage():
 
 
     def change_brain_blackspace(self):
+        """
+        Randomly varies the black pixels in the brain.
+        """
+
         replacement = random.randint(0,2)
         condition_mask = (self.mask_image == 1) & (self.slice_image < 0.1)
         brain_region =(self.mask_image == 1) & (self.slice_image > 0.1)
@@ -432,6 +470,11 @@ class Augmentimage():
 
 
     def add_signal_drop(self):
+        """
+        Adds straight black lines through
+        random parts of the image to simulate 
+        signal drop.
+        """
 
         add_signal_drop = np.random.randint(0, 20, \
         size=(self.slice_image.shape[0], 1))
@@ -441,10 +484,27 @@ class Augmentimage():
         np.random.uniform(0, 0.15, np.sum(broadcasted_mask))
 
     def calculate_brain_size(self):
+        """
+        Calculates the size of the brain 
+        based on its mask
+        """
+
         size = np.sum(self.mask_image)
         return size
 
-    def random_execution(self,probability):
+    def random_execution(self,probability : int):
+        """
+        Determines if a function 
+        will be executed based
+        on a specified probability
+
+        Parameters
+        ------------
+        probability : int
+            Chance that function will be 
+            executed
+        """
+
         execution_val = random.randint(1,10)
         if self.artifact_limit > 6:
             return False
@@ -513,7 +573,12 @@ class Augmentimage():
             for x in range(0,random.randint(1,7)):
                 self.draw_random_shape_with_opacity_grayscale()
 
-    def modify_images(self):
+    def modify_images(self) -> None:
+        """
+        Calls various functions to randomly
+        add augmentations to image
+        """
+
         brain_inverted = False
         self.brain_size = self.calculate_brain_size()
 
@@ -532,7 +597,9 @@ class Augmentimage():
             self.rotate_image()
             self.resize_image()
 
-         def add_extra_artifacts():
+        apply_to_all()
+
+        def add_extra_artifacts():
             contrast_change = random.uniform(0.1,1.8)
             self.change_skull_contrast(contrast_change)
             self.inversion = False
@@ -550,8 +617,6 @@ class Augmentimage():
             self.apply_signal_drop()
             self.apply_noise(\
             {'regular':0,'straight':0,'overlay':2})
-
-        apply_to_all()
     
         if self.extra_artifacts:
           add_extra_artifacts()
