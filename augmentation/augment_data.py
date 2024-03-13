@@ -265,7 +265,7 @@ class Augmentimage():
         Draws random shapes with
         varying levels of transparency 
         """
-        
+
         height, width = self.slice_image.shape[:2]
         overlay = np.zeros_like(self.slice_image)
         alpha = random.uniform(0.2, 0.8)
@@ -573,10 +573,17 @@ class Augmentimage():
             for x in range(0,random.randint(1,7)):
                 self.draw_random_shape_with_opacity_grayscale()
 
-    def modify_images(self) -> None:
+    def modify_images(self):
         """
         Calls various functions to randomly
         add augmentations to image
+
+        Returns
+        -------------
+        self.slice_image : np.array
+            Modified T1 Image
+        self.mask_image : np.array
+            Modified Mask
         """
 
         brain_inverted = False
