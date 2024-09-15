@@ -1,83 +1,114 @@
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+from tensorflow.keras.layers import Input, Conv2D,BatchNormalization, Activation, GaussianNoise, MaxPooling2D, UpSampling2D, concatenate,Dropout
+
+import tensorflow.keras.backend as K
+from tensorflow.keras.losses import BinaryCrossentropy, MeanSquaredError
+from tensorflow.keras.applications.vgg16 import VGG16
+from tensorflow.keras.losses import BinaryCrossentropy, MeanSquaredError
+from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import Input, Conv2D,Conv3D, BatchNormalization, Activation, GaussianNoise,MaxPooling3D,UpSampling3D,Add, SpatialDropout2D, Conv2DTranspose,Multiply
+from tensorflow.keras.callbacks import CSVLogger
+from tensorflow.keras.regularizers import l2
+
+from tensorflow.keras.losses import binary_crossentropy
+import numpy as np
+
+
 class Architectures():
-    def hybrid_dilated_model(self,activ_func : str, width : ,height) -> tf.keras.models.Model:
-        """
-        Model that combines dilated convolutional layers with maxpooling layers.
 
-        Parameters
-        ---------------
-        activ_func : str
-            activation function 
-        width: int
-            width of input and output
-        height : int
-            height of input and output
+    def atrous_attn_unet(self,input_shape=(256, 256, 1), num_classes=1, activation='sigmoid'):
+        def attention_block(F_g, F_l, F_int):
+            g = Conv2D(F_int, kernel_size=(1, 1), strides=(1, 1), padding='valid')(F_g)
+            g = BatchNormalization()(g)
+            x = Conv2D(F_int, kernel_size=(1, 1), strides=(1, 1), padding='valid')(F_l)
+            x = BatchNormalization()(x)
+            psi = Add()([g, x])
+            psi = Activation('elu')(psi)
+            psi = SpatialDropout2D(0.2)(psi)
+            psi = Conv2D(1, kernel_size=(1, 1), strides=(1, 1), padding='valid')(psi)
+            psi = Activation('sigmoid')(psi)
 
-        Returns
-        --------------
-        model : tf.keras.models.Model
-            The complete model defined in the function.
+            return Multiply()([F_l, psi])
+            
+        def convolution_block(x, filters, kernel_size, strides=1, dilation_rate=1, use_bias=False):
+            x = layers.Conv2D(filters, kernel_size, strides=strides, dilation_rate=dilation_rate,kernel_initializer='he_normal', padding='same', use_bias=use_bias)(x)
+            x = layers.BatchNormalization()(x)
+            x = layers.Activation('elu')(x)
+            x = SpatialDropout2D(0.2)(x)
+            shortcut = x
+            x = layers.Conv2D(filters, kernel_size, strides=strides, dilation_rate=1,kernel_initializer='he_normal', padding='same', use_bias=use_bias)(x)
+            x = layers.BatchNormalization()(x)
+            x = layers.Activation('elu')(x)
+            x = SpatialDropout2D(0.2)(x)
+            x = layers.Conv2D(filters, kernel_size, strides=strides, dilation_rate=dilation_rate,kernel_initializer='he_normal', padding='same', use_bias=use_bias)(x)
+            x = layers.BatchNormalization()(x)
+            x = layers.Activation('elu')(x)
+            x = SpatialDropout2D(0.2)(x)
+            x = Add()([x, shortcut])
 
-        """
+            return x
+
+        def atrous_spatial_pyramid_pooling(inputs, filters):
+            dims = K.int_shape(inputs)
+            pool_size = dims[1:3]
+
+            conv_1x1 = convolution_block(inputs, filters, 1)
+
+            conv_3x3_r6 = convolution_block(inputs, filters, 3, dilation_rate=2)
+            conv_3x3_r12 = convolution_block(inputs, filters, 3, dilation_rate=4)
+            conv_3x3_r18 = convolution_block(inputs, filters, 3, dilation_rate=6)
+
+            image_pooling = layers.GlobalAveragePooling2D()(inputs)
+            image_pooling = layers.Reshape((1, 1, dims[3]))(image_pooling)
+            image_pooling = convolution_block(image_pooling, filters, 1)
+            image_pooling = layers.UpSampling2D(size=pool_size, interpolation='bilinear')(image_pooling)
+
+            x = layers.Concatenate()([conv_1x1, conv_3x3_r6, conv_3x3_r12, conv_3x3_r18, image_pooling])
+            x = convolution_block(x, filters, 1)
+            
+            return x
+
+        inputs = layers.Input(shape=input_shape)
         
-        def dilation_block(input):
-            output = layers.Conv2D(64, (3, 3), dilation_rate=1, padding='same')(input)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
-            for dilation_rate in range(1, 16, 1):
-                print(dilation_rate)
-                filter_size = 64
-                output = layers.Conv2D(filter_size, (3, 3),\
-                dilation_rate=dilation_rate, padding='same')(output)
-                output = layers.BatchNormalization()(output)
-                output = layers.Activation(activ_func)(output)
-            return output
+        c1 = convolution_block(inputs, 32,3)
+        p1 = layers.MaxPooling2D((2, 2))(c1)
 
-        def max_pooling_block(input):
-            output = layers.Conv2D(64, (3, 3), dilation_rate=1, padding='same')(input)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
-            output = layers.concatenate([output,dilated_output])
-            output = layers.MaxPooling2D((2, 2))(output)
-            output = layers.Conv2D(64, (3, 3), dilation_rate=1, padding='same')(output)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
-            output = layers.Conv2D(64, (3, 3), dilation_rate=1, padding='same')(output)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
-            output = layers.Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(output)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
-            output = layers.Conv2D(64, (3, 3), dilation_rate=1, padding='same')(output)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
+        c2 = convolution_block(p1, 64, 3)
+        p2 = layers.MaxPooling2D((2, 2))(c2)
 
-            return output
+        c3 = convolution_block(p2, 128, 3)
+        p3 = layers.MaxPooling2D((2, 2))(c3)
 
-        def conv_block(input,filter_size):
-            output = layers.Conv2D(64,filter_size, dilation_rate=1, padding='same')(input)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
-            output = layers.concatenate([output,dilated_output,max_pooling_output])
-            output = layers.Conv2D(128,filter_size, dilation_rate=1, padding='same')(output)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
-            output = layers.Conv2D(64,filter_size, dilation_rate=1, padding='same')(output)
-            output = layers.BatchNormalization()(output)
-            output = layers.Activation(activ_func)(output)
+        c4 = convolution_block(p3, 256, 3)
+        p4 = layers.MaxPooling2D((2, 2))(c4)
 
-            return output
+        b = atrous_spatial_pyramid_pooling(p4, 256)
 
-        inputs = layers.Input(shape=(width, height, 1))
+        u4 = layers.UpSampling2D((2, 2))(b)
+        att4 = attention_block(u4, c4, 256)
+        u4 = layers.Concatenate()([u4, att4])
+        u4 = convolution_block(u4, 256, 3)
+        
+        u3 = layers.UpSampling2D((2, 2))(u4)
+        att3 = attention_block(u3, c3, 128)
+        u3 = layers.Concatenate()([u3, att3])
+        u3 = convolution_block(u3, 128, 3)
 
-        dilated_output = dilation_block(inputs)
-        max_pooling_output = max_pooling_block(inputs)
-        small_filter_output = conv_block(inputs,(3,3))
-        merged_outputs = layers.concatenate(\
-        [small_filter_output,dilated_output,max_pooling_output])
+        u2 = layers.UpSampling2D((2, 2))(u3)
+        att2 = attention_block(u2, c2, 64)
+        u2 = layers.Concatenate()([u2, att2])
+        u2 = convolution_block(u2, 64, 3)
 
-        final_layer = layers.Conv2D(64, (3, 3), padding='same')(merged_outputs)
+        u1 = layers.UpSampling2D((2, 2))(u2)
+        att1 = attention_block(u1, c1, 32)
+        u1 = layers.Concatenate()([u1, att1])
+        
+        u1 = convolution_block(u1, 32, 3)
+        u1 = convolution_block(u1, 32, 3)
 
-        outputs = layers.Conv2D(1, (1, 1), activation='sigmoid')(final_layer)
-        model = models.Model(inputs=[inputs], outputs=[outputs])
+        outputs = layers.Conv2D(num_classes, (1, 1), activation=activation)(u1)
+
+        model = models.Model(inputs=inputs, outputs=outputs)
         return model
-
