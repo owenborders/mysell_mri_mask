@@ -47,7 +47,7 @@ class KnownArtifacts():
           self,scan_img, mask_img,x_threshold, y_threshold,
           pos_or_neg_x, pos_or_neg_y,brightness_factors,
           ring_distances, mask_cutoff_factor
-      ):
+      ):  
         partial = 1
         def resize(img,scale):
             resized_image = zoom(img, (scale, scale),order=1)

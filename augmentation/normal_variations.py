@@ -28,7 +28,20 @@ class NormalVariations():
 
         return distorted_image
     
-    
+    def warp_image(self,img):
+
+        rows, cols = img.shape[:2]
+
+        pts1 = np.float32([[50, 50], [200, 50], [50, 200], [200, 200]])
+        pts2 = np.float32([[10, 130], [200, 50], [100, 250], [250, 250]])
+
+        M = cv2.getPerspectiveTransform(pts1, pts2)
+
+        img = cv2.warpPerspective(img, M, (cols, rows))
+
+
+        return img
+        
     def convert_to_mp2rage(self):
         smaller_mask = self.resize(self.mask_image, 0.8)
         self.slice_image[(self.slice_image > 0.1) & (self.mask_image < 0.05)] +=0.2
