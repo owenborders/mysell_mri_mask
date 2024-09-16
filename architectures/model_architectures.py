@@ -33,16 +33,22 @@ class Architectures():
             return Multiply()([F_l, psi])
             
         def convolution_block(x, filters, kernel_size, strides=1, dilation_rate=1, use_bias=False):
-            x = layers.Conv2D(filters, kernel_size, strides=strides, dilation_rate=dilation_rate,kernel_initializer='he_normal', padding='same', use_bias=use_bias)(x)
+            x = layers.Conv2D(filters, kernel_size, strides=strides, \
+            dilation_rate=dilation_rate,kernel_initializer='he_normal',\
+            padding='same', use_bias=use_bias)(x)
             x = layers.BatchNormalization()(x)
             x = layers.Activation('elu')(x)
             x = SpatialDropout2D(0.2)(x)
             shortcut = x
-            x = layers.Conv2D(filters, kernel_size, strides=strides, dilation_rate=1,kernel_initializer='he_normal', padding='same', use_bias=use_bias)(x)
+            x = layers.Conv2D(filters, kernel_size, strides=strides,\
+            dilation_rate=1,kernel_initializer='he_normal',\
+            padding='same', use_bias=use_bias)(x)
             x = layers.BatchNormalization()(x)
             x = layers.Activation('elu')(x)
             x = SpatialDropout2D(0.2)(x)
-            x = layers.Conv2D(filters, kernel_size, strides=strides, dilation_rate=dilation_rate,kernel_initializer='he_normal', padding='same', use_bias=use_bias)(x)
+            x = layers.Conv2D(filters, kernel_size, strides=strides,\
+            dilation_rate=dilation_rate,kernel_initializer='he_normal',\
+            padding='same', use_bias=use_bias)(x)
             x = layers.BatchNormalization()(x)
             x = layers.Activation('elu')(x)
             x = SpatialDropout2D(0.2)(x)
