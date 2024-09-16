@@ -7,7 +7,6 @@ import random
 from tensorflow.keras.models import load_model
 
 class EvaluateModel():
-
     def __init__(self):
         self.model_path = ''
 
