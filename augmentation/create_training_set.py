@@ -43,7 +43,6 @@ class RestorationTrainSet():
     def loop_subjects(self):
         sub_count = 0
         for subject in os.listdir(self.folder):
-
             mri_images = []
             masked_images = []
             final_orig_mri_images = []
@@ -52,8 +51,6 @@ class RestorationTrainSet():
             print(f'Subject: {sub_count}')
             if sub_count < 6 or sub_count > 20:
                 continue
-
-
 
             for file in os.listdir(self.folder + '/' + subject):
                 if 'brain' not in file:

@@ -14,30 +14,6 @@ from scipy.ndimage import binary_fill_holes,binary_dilation, binary_erosion
 
 
 
-"""print(tf.__version__)
-gpu_to_use = 1  
-
-gpus = tf.config.experimental. \
-list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_virtual_device_configuration(
-                gpu,
-                [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=40960)]
-            )
-
-        tf.config.experimental.set_visible_devices( \
-        gpus[gpu_to_use], 'GPU')
-        logical_gpus = tf.config.experimental. \
-        list_logical_devices('GPU')
-        #tf.config.experimental. \
-        #set_memory_growth(gpus[gpu_to_use], True)
-        print(len(gpus), "Physical GPUs,", \
-        len(logical_gpus), "Logical GPU")
-    except RuntimeError as e:
-        print(e)"""
-
 
 class GenerateMasks():
     def __init__(self, file_path, output_path):
@@ -295,21 +271,4 @@ class GenerateMasks():
         fin_out = fill_holes(fin_out)
 
         return fin_out
-        """print(fin_out.shape)
-        print('---')
-        print(orig_inp.shape)
-        orig_inp = self.normalize(orig_inp)
-        orig_inp[fin_out > 0] += 1
-        plt.imshow(fin_out, cmap='gray')
-        plt.axis('off')  
-        plt.savefig('mask_test1.png', bbox_inches='tight', pad_inches=0)
-        plt.imshow(orig_inp, cmap='gray')
-        plt.axis('off')  
-        plt.savefig('scan_test1.png', bbox_inches='tight', pad_inches=0)"""
-        """output = self.qc_model.predict(input)
-        print(output)
-        self.total_score+=output[0][0]
-        print('tot')
-        print(self.total_score)
-        return output"""
-
+      
