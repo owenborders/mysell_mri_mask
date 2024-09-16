@@ -192,8 +192,10 @@ class KnownArtifacts():
         random_state = np.random.RandomState(None)
 
         shape = image.shape
-        dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode='constant', cval=0) * alpha
-        dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), sigma, mode='constant', cval=0) * alpha
+        dx = gaussian_filter((random_state.rand(*shape) * 2 - 1), \
+        sigma, mode='constant', cval=0) * alpha
+        dy = gaussian_filter((random_state.rand(*shape) * 2 - 1), \
+        sigma, mode='constant', cval=0) * alpha
 
         x, y = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]))
         map_x = (x + dx).astype(np.float32)
