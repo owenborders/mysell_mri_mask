@@ -28,17 +28,15 @@ class NormalVariations():
 
         return distorted_image
     
-    def warp_image(self,img):
-
+    def warp_image(self,img, initial_points, transformed_points):
         rows, cols = img.shape[:2]
 
-        pts1 = np.float32([[50, 50], [200, 50], [50, 200], [200, 200]])
-        pts2 = np.float32([[10, 130], [200, 50], [100, 250], [250, 250]])
+        pts1 = np.float32(initial_points)
+        pts2 = np.float32(transformed_points)
 
         M = cv2.getPerspectiveTransform(pts1, pts2)
 
         img = cv2.warpPerspective(img, M, (cols, rows))
-
 
         return img
         
