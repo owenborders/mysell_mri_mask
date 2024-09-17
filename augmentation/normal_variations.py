@@ -25,6 +25,7 @@ class NormalVariations():
         transformed_pints : list
             Coordinates that the initial points arer being transformed into
         """
+        
         rows, cols = img.shape[:2]
 
         pts1 = np.float32(initial_points)
@@ -34,7 +35,20 @@ class NormalVariations():
         img = cv2.warpPerspective(img, M, (cols, rows))
 
         return img
+    
+    def create_warp_ranges(self, num_points, variation_range):
+
+        orig_points = [[50, 50], [200, 50], [50, 200], [200, 200]]
+        transformed_points = []
+        for point_ind in range(0, num_points):
+            transformed_points.append([random.randint(orig_points[point_ind][0],\
+            orig_points[point_ind][0] + variation_range),\
+            random.randint(orig_points[point_ind][1], \
+            orig_points[point_ind][1] + variation_range)])
         
+        return orig_points, transformed_points
+
+
     def convert_to_mp2rage(self):
         smaller_mask = self.resize(self.mask_image, 0.8)
         self.slice_image[(self.slice_image > 0.1) & (self.mask_image < 0.05)] +=0.2

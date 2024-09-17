@@ -143,8 +143,6 @@ class KnownArtifacts():
         noise_overlay[overlay>0] +=noise[overlay>0]
 
         overlay = cv2.GaussianBlur(overlay, (blur_size, blur_size), 0)
-        
-
         overlay_array = np.array(overlay)
         if brain_only == True:
           #overlay_array[mask < 0.5] = 0
