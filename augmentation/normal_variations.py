@@ -37,6 +37,22 @@ class NormalVariations():
 
         return img
     
+
+    def randomize_resolution(image):
+
+        height, width = image.shape[:2]
+
+        scale_factor = random.uniform(0.3, 0.3)
+
+        new_width = int(width * scale_factor)
+        new_height = int(height * scale_factor)
+
+        downscaled_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
+
+        upscaled_image = cv2.resize(downscaled_image, (width, height), interpolation=cv2.INTER_LINEAR)
+
+        return upscaled_image
+
     def create_warp_ranges(self, num_points, variation_range):
 
         orig_points = [[50, 50], [200, 50], [50, 200], [200, 200]]
@@ -85,8 +101,7 @@ class NormalVariations():
         np.clip(self.slice_image, 0, 1, out=self.slice_image)
 
 
-    def convert_to_mp2rage(self):
-              
+    def convert_to_mp2rage(self):     
         smaller_mask = self.utils.resize(self.mask_image, 0.9)
         self.slice_image[(self.slice_image > 0.1) & (self.mask_image < 0.05)] +=0.3
         self.change_brain_contrast(2)
@@ -95,7 +110,6 @@ class NormalVariations():
 
         #self.slice_image[(self.slice_image < 0.1) & (self.mask_image > 0.05)] *= random.uniform(1.5,3.5)
         self.change_skull_contrast(2)
-        
         for row in range(0,len(self.slice_image)):
             for pixel in range(0,len(self.slice_image[row])):
                 max_pixel = random.uniform(0.3, 0.9)
