@@ -39,6 +39,14 @@ class NormalVariations():
         return img
     
 
+    def advanced_pixel_val_modifications(img):
+        pixel_distribution = {}
+        for pixel_range in np.arange(0.0, 1.0, 0.1):
+            pixel_distribution[pixel_range] = \
+            np.sum((img >= pixel_range) & (img <= pixel_range + 0.1))
+
+    
+
     def randomize_resolution(image):
         height, width = image.shape[:2]
         scale_factor = random.uniform(0.3, 0.3)
@@ -101,15 +109,12 @@ class NormalVariations():
 
         for x in range(0,2):
             pts1, pts2 = self.create_warp_ranges(self, skull_only, 4, 100)
-            skull_only = self.standard_transformations.rotate_image(skull_only, random.randint(0,360))
+            skull_only = self.standard_transformations.rotate_image(\
+                skull_only, random.randint(0,360))
 
             skull_only = self.standard_transformations.warp_image(skull_only, pts1, pts2)
 
-        
-
         self.slice_image[self.slice_image < 0.1] = skull_only[self.slice_image < 0.1]
-
-
 
     def convert_to_mp2rage(self):     
         smaller_mask = self.utils.resize(self.mask_image, 0.9)
