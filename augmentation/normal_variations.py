@@ -33,7 +33,6 @@ class NormalVariations():
 
         pts1 = np.float32(initial_points)
         pts2 = np.float32(transformed_points)
-
         M = cv2.getPerspectiveTransform(pts1, pts2)
 
         img = cv2.warpPerspective(img, M, (cols, rows))
