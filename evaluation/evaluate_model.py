@@ -17,8 +17,10 @@ from tensorflow.keras.models import load_model
 
 
 class EvaluateModel():
-    def __init__(self):
+    def __init__(self, model_path):
         self.model_path = ''
+
+        self.performance_per_slice = {'axial':{},'sagittal':{},'coronal':{}}
 
     def run_script(self):
         self.load_model()
@@ -26,6 +28,10 @@ class EvaluateModel():
     def load_model(self):
         pass
 
+    def test_accuracy(self):
+        pass
+
 
 if __name__ == '__main__':
-    EvaluateModel().run_script()
+    model_path = '/data/pnlx/projects/mysell_masking_cnn/final_results/models/attention_unet_stage_one_best_only.h5'
+    EvaluateModel(model_path).run_script()

@@ -186,7 +186,7 @@ class KnownArtifacts():
         return scan_img
 
 
-      def overlay_random_noise(self, scan_img, mask_img, absolute_max,absolute_min, brain_only) -> None:
+      def overlay_random_noise(self, scan_img, mask_img, absolute_max, absolute_min, brain_only) -> None:
         """
         Adds noise over the
         entire image

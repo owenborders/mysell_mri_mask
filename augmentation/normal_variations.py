@@ -45,8 +45,6 @@ class NormalVariations():
             pixel_distribution[pixel_range] = \
             np.sum((img >= pixel_range) & (img <= pixel_range + 0.1))
 
-    
-
     def randomize_resolution(image):
         height, width = image.shape[:2]
         scale_factor = random.uniform(0.3, 0.3)
@@ -137,17 +135,6 @@ class NormalVariations():
                         min_pixel = 0
                         max_pixel *= 0.5
                     self.slice_image[row][pixel] += random.uniform(min_pixel, max_pixel)
-            for pixel in range(len(self.slice_image[row])-1,0,-1):
-                max_pixel = random.uniform(0.3, 0.9)
-                min_pixel = random.uniform(0.1, max_pixel)
-                if (self.slice_image[row][pixel] > 0.2 and self.mask_image[row][pixel] <  0.05) \
-                or (smaller_mask[row][pixel] > 0.05):
-                    continue
-                else:
-                    if self.mask_image[row][pixel] > 0.05:
-                        min_pixel = 0
-                        max_pixel *= 0.3
-                    self.slice_image[row][pixel]  += random.uniform(min_pixel , max_pixel)
 
     def blur_image(self):
         blur_size = (2 * random.randint(1, 4)) + 1
