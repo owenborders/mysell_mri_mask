@@ -7,6 +7,8 @@ import random
 from tensorflow.keras.models import load_model
 
 import os
+
+from matplotlib import pyplot as plt
 #plan
 #Test each slice for each scan for each test set
 # collect total dice coefficients and create histograms of avrge performance per slice
@@ -21,13 +23,14 @@ class EvaluateModel():
         self.model_path = model_path
         self.performance_per_slice = {'axial':{},'sagittal':{},'coronal':{}}
         self.test_set_directory = test_set_directory
+        self.all_dice_losses = []
         
 
     def run_script(self):
         self.load_model()
         self.loop_directory()
 
-    def dice_loss( y_true, y_pred):
+    def dice_loss(self, y_true, y_pred):
         smooth = 1e-6  
         y_true_f = tf.reshape(y_true, [-1])
         y_pred_f = tf.reshape(y_pred, [-1])
@@ -88,24 +91,30 @@ class EvaluateModel():
         }
 
         self.evaluated_model = load_model(\
-        '/data/pnlx/projects/mysell_masking_cnn/boundary_loss_prioritized.h5',\
+        self.model_path,\
         custom_objects=custom_objects)
 
     def loop_directory(self):
         for sub in os.listdir(self.test_set_directory):
+            if int(sub.split('_')[-1]) < 116:
+                continue
             mri_array = np.load(self.test_set_directory + f'{sub}/mri_array.npy')
             mask_array = np.load(self.test_set_directory + f'{sub}/mask_array.npy')
-            self.test_accuracy(mri_array, mask_array)
+            self.test_accuracy( mask_array,mri_array,)
     
-    def apply_threshold(preds, threshold = 0.5):
+    def apply_threshold(self, preds, threshold = 0.5):
 
         return tf.cast(tf.greater(preds,threshold), tf.float64)
 
     def test_accuracy(self, mask_array, mri_array):
         for mri_slice in range(0,mri_array.shape[0]):
             prediction = self.evaluated_model.predict(np.array([mri_array[mri_slice]]))
-            dice_loss = self.dice_loss(mask_array[mri_slice],prediction)
-            print(dice_loss)
+            prediction = self.apply_threshold(prediction)
+            true_mask = self.apply_threshold(mask_array[mri_slice]) 
+            dice_loss = self.dice_loss(true_mask,prediction)
+            self.all_dice_losses.append(dice_loss)
+
+            print(f"dice_loss: {np.mean(self.all_dice_losses)}")
 
 
 if __name__ == '__main__':
