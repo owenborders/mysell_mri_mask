@@ -18,15 +18,23 @@ import os
 
 class EvaluateModel():
     def __init__(self, model_path, test_set_directory):
-        self.model_path = ''
-
+        self.model_path = model_path
         self.performance_per_slice = {'axial':{},'sagittal':{},'coronal':{}}
         self.test_set_directory = test_set_directory
-
+        
 
     def run_script(self):
         self.load_model()
         self.loop_directory()
+
+    def dice_loss( y_true, y_pred):
+        smooth = 1e-6  
+        y_true_f = tf.reshape(y_true, [-1])
+        y_pred_f = tf.reshape(y_pred, [-1])
+        intersection = tf.reduce_sum(y_true_f * y_pred_f)
+        return 1 - (2. * intersection + smooth) / (tf.reduce_sum(y_true_f)\
+        + tf.reduce_sum(y_pred_f) + smooth)
+
 
     def load_model(self):
 
@@ -69,6 +77,7 @@ class EvaluateModel():
 
         def weighted_boundary_loss(y_true, y_pred):
             pass
+
         custom_objects = {
             'combined_dice_bce_loss':combined_dice_bce_loss,
             'dice_loss':dice_loss,
@@ -84,13 +93,19 @@ class EvaluateModel():
 
     def loop_directory(self):
         for sub in os.listdir(self.test_set_directory):
-            for file in os.listdir(self.test_set_directory + sub):
-                print(file)
+            mri_array = np.load(self.test_set_directory + f'{sub}/mri_array.npy')
+            mask_array = np.load(self.test_set_directory + f'{sub}/mask_array.npy')
+            self.test_accuracy(mri_array, mask_array)
+    
+    def apply_threshold(preds, threshold = 0.5):
 
+        return tf.cast(tf.greater(preds,threshold), tf.float64)
 
-
-    def test_accuracy(self):
-        pass
+    def test_accuracy(self, mask_array, mri_array):
+        for mri_slice in range(0,mri_array.shape[0]):
+            prediction = self.evaluated_model.predict(np.array([mri_array[mri_slice]]))
+            dice_loss = self.dice_loss(mask_array[mri_slice],prediction)
+            print(dice_loss)
 
 
 if __name__ == '__main__':
