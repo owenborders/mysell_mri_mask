@@ -88,7 +88,6 @@ class EvaluateModel():
           bce = tf.keras.losses.BinaryCrossentropy()(y_true, y_pred)
           d_loss = self.dice_loss(y_true, y_pred)
           boundary = self.boundary_loss(y_true, y_pred)
-
           total_loss = (alpha * bce) + (beta * d_loss) + (gamma * boundary)
           
           return total_loss
@@ -156,8 +155,6 @@ class EvaluateModel():
                     self.performance_per_slice[view_list[view]][slice_count] += output
                     
 
-                    
-
                 elif view == 1 and slice_count < nii_data_array.shape[view]:
                     print(view)
                     #print(nii_data_array[:,slice_count,:].shape)
@@ -192,9 +189,6 @@ class EvaluateModel():
 
                     self.performance_per_slice[view_list[view]].setdefault(slice_count,0)
                     self.performance_per_slice[view_list[view]][slice_count] += output
-
-
-                
 
 
 
@@ -235,8 +229,6 @@ class EvaluateModel():
             # Save the combined figure
             plt.savefig('combined_predictions.png', bbox_inches='tight', pad_inches=0)
             plt.close(fig)  # Close the figure to free up memory
-
-
 
 
         return dice_loss

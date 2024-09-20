@@ -95,7 +95,7 @@ class KnownArtifacts():
 
           indices = np.where(edges > 0.5)
 
-          interval =random.randint(20,100)
+          interval = random.randint(20,100)
           brain_mean = np.mean(scan_img[mask_img>0])
           only_brightness = random.randint(0,0)
 
