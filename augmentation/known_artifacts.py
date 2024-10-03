@@ -95,7 +95,7 @@ class KnownArtifacts():
 
           indices = np.where(edges > 0.5)
 
-          interval =random.randint(20,100)
+          interval = random.randint(20,100)
           brain_mean = np.mean(scan_img[mask_img>0])
           only_brightness = random.randint(0,0)
 
@@ -143,8 +143,6 @@ class KnownArtifacts():
         noise_overlay[overlay>0] +=noise[overlay>0]
 
         overlay = cv2.GaussianBlur(overlay, (blur_size, blur_size), 0)
-        
-
         overlay_array = np.array(overlay)
         if brain_only == True:
           #overlay_array[mask < 0.5] = 0
@@ -188,7 +186,7 @@ class KnownArtifacts():
         return scan_img
 
 
-      def overlay_random_noise(self, scan_img, mask_img, absolute_max,absolute_min, brain_only) -> None:
+      def overlay_random_noise(self, scan_img, mask_img, absolute_max, absolute_min, brain_only) -> None:
         """
         Adds noise over the
         entire image
